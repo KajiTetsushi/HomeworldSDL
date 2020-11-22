@@ -3328,6 +3328,7 @@ gotselection:
         {
             case Carrier:
             case Mothership:
+            case P1Mothership:
 /*
                 if (mouseCursorSelect.numShips > 0)
                 {
