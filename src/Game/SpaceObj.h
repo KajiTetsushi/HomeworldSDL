@@ -75,6 +75,9 @@ typedef struct
     // for GUN_MissileLauncher
     sdword maxMissiles;
 
+    // VolleyFire
+    bool canVolleyFire;         // Can the volley fire special ability use this weapon?
+
     real32 triggerHappy;        // cosine of maximum allowed angle allowed before a fixed gun will shoot
     real32 gunDamageLo[NUM_TACTICS_TYPES];          // low damage potential
     real32 gunDamageHi[NUM_TACTICS_TYPES];          // high damage potential
