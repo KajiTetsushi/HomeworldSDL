@@ -7,64 +7,86 @@
 
 #include "P1MissileCorvette.h"
 
+#include "Ammunition.h"
 #include "Attack.h"
 #include "Battle.h"
 #include "DefaultShip.h"
 #include "Gun.h"
+#include "ObjTypes.h"
 #include "SoundEvent.h"
 #include "StatScript.h"
 #include "Universe.h"
+#include "VolleyFire.h"
 
-#define VOLLEY_BEGIN 10
-#define VOLLEY_NOT_BEGIN 20
+P1MissileCorvetteStat p1MissileCorvetteStat;
 
-typedef struct
-{
-    AttackSideStep attacksidestep;
-    real32 lasttimeRegeneratedMissiles;
-    real32 lasttimeFiredVolley;
-    real32 lasttimeDidSpecialTargeting;
-    sdword curTargetIndex;
-    sdword volleyState;
-} P1MissileCorvetteSpec;
-
-typedef struct
-{
-    real32 missilecorvetteGunRange[NUM_TACTICS_TYPES];
-    real32 missilecorvetteTooCloseRange[NUM_TACTICS_TYPES];
-    real32 missileRegenerateTime;
-    real32 missileVolleyTime;
-    real32 missileLagVolleyTime;
-    AttackSideStepParameters sidestepParameters;
-} P1MissileCorvetteStatics;
-
-P1MissileCorvetteStatics P1MissileCorvetteStatic;
-
+/**
+ * @deprecated We should use the new namespaced API from here on out.
+ */
 scriptStructEntry P1MissileCorvetteScriptTable[] =
 {
-    { "MissileRegenerateTime",scriptSetReal32CB, &(P1MissileCorvetteStatic.missileRegenerateTime), &(P1MissileCorvetteStatic) },
-    { "MissileVolleyTime",scriptSetReal32CB, &(P1MissileCorvetteStatic.missileVolleyTime), &(P1MissileCorvetteStatic) },
-    { "MissileLagVolleyTime",scriptSetReal32CB, &(P1MissileCorvetteStatic.missileLagVolleyTime), &(P1MissileCorvetteStatic) },
+    { "MissileRegenerateTime",    scriptSetReal32CB,    &(p1MissileCorvetteStat.missileRegenerateTime),    &(p1MissileCorvetteStat) },
+    { "MissileVolleyTime",        scriptSetReal32CB,    &(p1MissileCorvetteStat.missileVolleyTime),        &(p1MissileCorvetteStat) },
+    { "MissileLagVolleyTime",     scriptSetReal32CB,    &(p1MissileCorvetteStat.missileLagVolleyTime),     &(p1MissileCorvetteStat) },
 
     END_SCRIPT_STRUCT_ENTRY
 };
 
-void P1MissileCorvetteStaticInit(char *directory,char *filename,struct ShipStaticInfo *statinfo)
+/**
+ * @brief Initializes the ship using legacy attributes, if all of them were provided.
+ * @deprecated Backwards compatibility
+ * @param shipStaticInfo Ship static info.
+ * @param stat Ship statics.
+ */
+void P1MissileCorvetteStatInitLegacy(struct ShipStaticInfo *shipStaticInfo, P1MissileCorvetteStat *stat)
 {
-    udword i;
-    P1MissileCorvetteStatics *corvstat = &P1MissileCorvetteStatic;
-
-    memset(corvstat, 0, sizeof(P1MissileCorvetteStatics));
-
-    scriptSetStruct(directory,filename,AttackSideStepParametersScriptTable,(ubyte *)&corvstat->sidestepParameters);
-    scriptSetStruct(directory,filename,P1MissileCorvetteScriptTable,(ubyte *)corvstat);
-
-    statinfo->custstatinfo = corvstat;
-
-    for(i=0;i<NUM_TACTICS_TYPES;i++)
+    // Stop here if none of these were declared in the *.shp file.
+    // - MissileVolleyTime
+    // - MissileLagVolleyTime
+    // - MissileRegenerateTime
+    if (!(stat->missileVolleyTime && stat->missileLagVolleyTime && stat->missileRegenerateTime))
     {
-        corvstat->missilecorvetteGunRange[i] = statinfo->bulletRange[i];
-        corvstat->missilecorvetteTooCloseRange[i] = statinfo->minBulletRange[i] * 0.9f;
+        return;
+    }
+
+    // Assign fallbacks for the essential simple values.
+    stat->volleyFire.fireDelay = stat->missileVolleyTime;
+    stat->volleyFire.abilityCooldown = stat->missileLagVolleyTime;
+    stat->ammunition.reloadDelay = stat->missileRegenerateTime;
+
+    // Override only the missile launchers to allow volley fire.
+    sdword noOfWeapons = shipStaticInfo->gunStaticInfo->numGuns;
+    sdword weaponIndex;
+    GunStatic *gunStatic;
+
+    for (weaponIndex = 0; weaponIndex < noOfWeapons; weaponIndex++)
+    {
+        gunStatic = &shipStaticInfo->gunStaticInfo->gunstatics[weaponIndex];
+        bool canVolleyFire = gunStatic->guntype == GUN_MissileLauncher ? TRUE : gunStatic->canVolleyFire;
+        gunStatic->canVolleyFire = canVolleyFire;
+    }
+}
+
+void P1MissileCorvetteStatInit(char *directory, char *filename, struct ShipStaticInfo *shipStaticInfo)
+{
+    P1MissileCorvetteStat *stat = &p1MissileCorvetteStat;
+
+    memset(stat, 0, sizeof(P1MissileCorvetteStat));
+
+    scriptSetStruct(directory, filename, AttackSideStepParametersScriptTable, (ubyte *)&stat->sidestepParameters);
+    scriptSetStruct(directory, filename, AmmunitionStatScriptTable, (ubyte *)&stat->ammunition);
+    scriptSetStruct(directory, filename, VolleyFireStatScriptTable, (ubyte *)&stat->volleyFire);
+    scriptSetStruct(directory, filename, P1MissileCorvetteScriptTable, (ubyte *)stat);
+
+    P1MissileCorvetteStatInitLegacy(shipStaticInfo, stat);
+
+    shipStaticInfo->custstatinfo = stat;
+
+    udword tacticIndex;
+    for (tacticIndex = 0; tacticIndex < NUM_TACTICS_TYPES; tacticIndex++)
+    {
+        stat->wpnRange[tacticIndex] = shipStaticInfo->bulletRange[tacticIndex];
+        stat->wpnMinRange[tacticIndex] = shipStaticInfo->minBulletRange[tacticIndex] * 0.9f;
     }
 }
 
@@ -73,185 +95,134 @@ void P1MissileCorvetteInit(Ship *ship)
     P1MissileCorvetteSpec *spec = (P1MissileCorvetteSpec *)ship->ShipSpecifics;
 
     attackSideStepInit(&spec->attacksidestep);
-
-    spec->lasttimeRegeneratedMissiles = 0.0f;
-    spec->lasttimeFiredVolley = 0.0f;
-    spec->lasttimeDidSpecialTargeting = -100000.0f;
-    spec->curTargetIndex = 0;
-    spec->volleyState = VOLLEY_BEGIN;
+    volleyFireInit(&spec->volleyFire);
+    ammunitionInit(&spec->ammunition);
 }
 
-void P1MissileCorvetteAttack(Ship *ship,SpaceObjRotImpTarg *target,real32 maxdist)
+void P1MissileCorvetteAttack(Ship *ship, SpaceObjRotImpTarg *target, real32 maxdist)
 {
     P1MissileCorvetteSpec *spec = (P1MissileCorvetteSpec *)ship->ShipSpecifics;
-    P1MissileCorvetteStatics *corvstat = (P1MissileCorvetteStatics *)((ShipStaticInfo *)ship->staticinfo)->custstatinfo;
+    P1MissileCorvetteStat *stat = (P1MissileCorvetteStat *)((ShipStaticInfo *)ship->staticinfo)->custstatinfo;
 
-    attackSideStep(ship,target,&spec->attacksidestep,&corvstat->sidestepParameters);
+    attackSideStep(ship, target, &spec->attacksidestep, &stat->sidestepParameters);
 }
 
-void P1MissileCorvetteAttackPassive(Ship *ship,Ship *target,bool rotate)
+void P1MissileCorvetteAttackPassive(Ship *ship, Ship *target, bool rotate)
 {
     if ((rotate) & ((bool)((ShipStaticInfo *)(ship->staticinfo))->rotateToRetaliate))
     {
-        attackPassiveRotate(ship,target);
+        attackPassiveRotate(ship, target);
     }
     else
     {
-        attackPassive(ship,target);
+        attackPassive(ship, target);
     }
 }
 
 void P1MissileCorvetteHousekeep(Ship *ship)
 {
-    ShipStaticInfo *shipstaticinfo = (ShipStaticInfo *)ship->staticinfo;
+    ShipStaticInfo *shipStaticInfo = (ShipStaticInfo *)ship->staticinfo;
     P1MissileCorvetteSpec *spec = (P1MissileCorvetteSpec *)ship->ShipSpecifics;
-    P1MissileCorvetteStatics *mcorvettestat = (P1MissileCorvetteStatics *)shipstaticinfo->custstatinfo;
-    sdword numGuns;
-    sdword i;
-    Gun *gun;
-    GunStatic *gunstatic;
-    sdword minMissiles;
-    sdword minIndex;
+    P1MissileCorvetteStat *stat = (P1MissileCorvetteStat *)shipStaticInfo->custstatinfo;
+    bool isVolleyFireReady = volleyFireIsReady(&spec->volleyFire, &stat->volleyFire);
 
-    if ((universe.totaltimeelapsed - spec->lasttimeDidSpecialTargeting) > mcorvettestat->missileLagVolleyTime)
+    if (!isVolleyFireReady)
     {
-        if ((universe.totaltimeelapsed - spec->lasttimeRegeneratedMissiles) > mcorvettestat->missileRegenerateTime)
+        return;
+    }
+
+    GunInfo *gunInfo = ship->gunInfo;
+    GunStaticInfo *gunStaticInfo = shipStaticInfo->gunStaticInfo;
+
+    ammunitionReloadLeastNoOfRoundsGun(
+        &spec->ammunition,
+        &stat->ammunition,
+        gunInfo,
+        gunStaticInfo);
+}
+
+bool P1MissileCorvetteSpecialTargetAttack(Ship *ship, VolleyFireSpec *volleyFireSpec, VolleyFireStat *volleyFireStat, SelectAnyCommand *targets)
+{
+    ShipStaticInfo *shipStaticInfo = (ShipStaticInfo *)ship->staticinfo;
+
+    // Targets
+    SpaceObjRotImpTarg *target;
+    sdword noOfShipsToTarget = targets->numTargets;
+
+    // Weapons
+    Gun *gun;
+    GunStatic *gunStatic;
+    sdword gunIndex;
+    sdword noOfGuns = ship->gunInfo->numGuns;
+    bool hasFiredAtLeastOnce = FALSE;
+
+    // Correct the current target index if it's out of bounds from the last attempt.
+    if (volleyFireSpec->currentTargetIndex >= noOfShipsToTarget)
+    {
+        volleyFireSetCurrentTargetIndex(volleyFireSpec, 0);
+    }
+
+    // Attempt to attack each target.
+    for (gunIndex = 0; gunIndex < noOfGuns; gunIndex++)
+    {
+        target = targets->TargetPtr[volleyFireSpec->currentTargetIndex];
+        gunStatic = &shipStaticInfo->gunStaticInfo->gunstatics[gunIndex];
+        gun = &ship->gunInfo->guns[gunIndex];
+
+        // Break early if this weapon cannot volley fire.
+        if (!(gunStatic->canVolleyFire))
         {
-            spec->lasttimeRegeneratedMissiles = universe.totaltimeelapsed;
-            numGuns = ship->gunInfo->numGuns;
-
-            // find missile launcher with least missiles, and give it a missile
-            for (i=0,minIndex=-1,minMissiles=100000;i<numGuns;i++)
-            {
-                gunstatic = &shipstaticinfo->gunStaticInfo->gunstatics[i];
-                if (gunstatic->guntype == GUN_MissileLauncher)
-                {
-                    gun = &ship->gunInfo->guns[i];
-                    if (gun->numMissiles < gunstatic->maxMissiles)
-                    {
-                        if (gun->numMissiles < minMissiles)
-                        {
-                            minMissiles = gun->numMissiles;
-                            minIndex = i;
-                        }
-                    }
-                }
-            }
-
-            if (minIndex != -1)
-            {
-                ship->gunInfo->guns[minIndex].numMissiles++;
-            }
+            continue;
         }
+
+        // Break early if this weapon has no ammunition remaining.
+        if (!gunHasAmmunition(gun))
+        {
+            continue;
+        }
+
+        hasFiredAtLeastOnce = TRUE;
+        missileShoot(ship, gun, target);
+
+        sdword nextTargetIndex = volleyFireGetNextTargetIndex(volleyFireSpec->currentTargetIndex, noOfShipsToTarget);
+        volleyFireSetCurrentTargetIndex(volleyFireSpec, nextTargetIndex);
+    }
+
+    if (hasFiredAtLeastOnce)
+    {
+        return FALSE;
+    }
+    // Stop here and reset everything if the weapons are out of ammunition.
+    else
+    {
+        volleyFireSetBattleChatterBusy(volleyFireSpec, FALSE);
+        volleyFireSetCurrentTargetIndex(volleyFireSpec, 0);
+
+        return TRUE;
     }
 }
 
-bool P1MissileCorvetteSpecialTarget(Ship *ship,void *custom)
+bool P1MissileCorvetteSpecialTarget(Ship *ship, void *custom)
 {
-    SelectAnyCommand *targets;
-    sdword i;
-    sdword numShipsToTarget;
-    sdword numGuns;
-    Gun *gun;
-    GunStatic *gunstatic;
-    SpaceObjRotImpTarg *target;
-    ShipStaticInfo *shipstaticinfo;
-    P1MissileCorvetteSpec *spec;
-    P1MissileCorvetteStatics *mcorvettestat;
-    bool firedSomeMissiles;
+    ShipStaticInfo *shipStaticInfo = (ShipStaticInfo *)ship->staticinfo;
+    P1MissileCorvetteSpec *spec = (P1MissileCorvetteSpec *)ship->ShipSpecifics;
+    P1MissileCorvetteStat *stat = (P1MissileCorvetteStat *)shipStaticInfo->custstatinfo;
 
-    spec = (P1MissileCorvetteSpec *)ship->ShipSpecifics;
-    shipstaticinfo = (ShipStaticInfo *)ship->staticinfo;
-    mcorvettestat = (P1MissileCorvetteStatics *)shipstaticinfo->custstatinfo;
-
-    spec->lasttimeDidSpecialTargeting = universe.totaltimeelapsed;
-
-    // check that the "volley reload time" has passed
-    if ((universe.totaltimeelapsed - spec->lasttimeFiredVolley) > mcorvettestat->missileVolleyTime)
-    {
-        spec->lasttimeFiredVolley = universe.totaltimeelapsed;
-    }
-    else
-    {
-        return FALSE;
-    }
-
-    targets = (SelectAnyCommand *)custom;
-    numShipsToTarget = targets->numTargets;
-
-    if (numShipsToTarget == 0)
-    {
-        // have destroyed targets, so we are done
-        spec->curTargetIndex = 0;
-        spec->volleyState = VOLLEY_BEGIN;
-        return TRUE;
-    }
-
-    if(spec->volleyState == VOLLEY_BEGIN)
-    {
-        spec->volleyState = VOLLEY_NOT_BEGIN;
-        //////////////////////
-        //Volley attack speech event!
-        //event num: COMM_MissleDest_VolleyAttack
-        //use battle chatter
-        if(ship->playerowner->playerIndex == universe.curPlayerIndex)
-        {
-            if (battleCanChatterAtThisTime(BCE_COMM_MissleDest_VolleyAttack, ship))
-            {
-                battleChatterAttempt(SOUND_EVENT_DEFAULT, BCE_COMM_MissleDest_VolleyAttack, ship, SOUND_EVENT_DEFAULT);
-            }
-        }
-        //////////////////////
-    }
-
-    if (spec->curTargetIndex >= numShipsToTarget)
-    {
-        spec->curTargetIndex = 0;
-    }
-
-    numGuns = ship->gunInfo->numGuns;
-    firedSomeMissiles = FALSE;
-    for (i=0;i<numGuns;i++)
-    {
-        gunstatic = &shipstaticinfo->gunStaticInfo->gunstatics[i];
-        if (gunstatic->guntype == GUN_MissileLauncher)
-        {
-            gun = &ship->gunInfo->guns[i];
-            if (gunHasMissiles(gun))
-            {
-                firedSomeMissiles = TRUE;
-
-                target = targets->TargetPtr[spec->curTargetIndex];
-
-                missileShoot(ship,gun,target);
-
-                spec->curTargetIndex++;
-                if (spec->curTargetIndex >= numShipsToTarget)
-                {
-                    spec->curTargetIndex = 0;
-                }
-            }
-        }
-    }
-
-    if (firedSomeMissiles)
-    {
-        return FALSE;
-    }
-    else
-    {
-        // all empty of missiles, so we are done
-        spec->curTargetIndex = 0;
-        spec->volleyState = VOLLEY_BEGIN;
-        return TRUE;
-    }
+    return volleyFireSpecialTarget(
+        ship,
+        custom,
+        &spec->volleyFire,
+        &stat->volleyFire,
+        volleyFireShootAllTargetsDrifting,
+        missileShoot,
+        BCE_COMM_MissleDest_VolleyAttack);
 }
 
 CustShipHeader P1MissileCorvetteHeader =
 {
     P1MissileCorvette,
     sizeof(P1MissileCorvetteSpec),
-    P1MissileCorvetteStaticInit,
+    P1MissileCorvetteStatInit,
     NULL,
     P1MissileCorvetteInit,
     NULL,
@@ -268,4 +239,3 @@ CustShipHeader P1MissileCorvetteHeader =
     NULL,
     NULL
 };
-
