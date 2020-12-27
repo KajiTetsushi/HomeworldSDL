@@ -7,6 +7,8 @@
 
 #include "MissileDestroyer.h"
 
+#include "AIShip.h"
+#include "AITrack.h"
 #include "Ammunition.h"
 #include "Attack.h"
 #include "Collision.h"
@@ -14,7 +16,6 @@
 #include "DefaultShip.h"
 #include "Gun.h"
 #include "ObjTypes.h"
-#include "SoundEvent.h"
 #include "StatScript.h"
 #include "Universe.h"
 #include "Vector.h"
@@ -141,20 +142,111 @@ void MissileDestroyerHousekeep(Ship *ship)
         gunStaticInfo);
 }
 
-bool MissileDestroyerSpecialTarget(Ship *ship, void *custom)
+bool MissileDestroyerSpecialTargetAttack(Ship *ship, VolleyFireSpec *volleyFireSpec, VolleyFireStat *volleyFireStat, SelectAnyCommand *targets)
+{
+    ShipStaticInfo *shipStaticInfo = (ShipStaticInfo *)ship->staticinfo;
+
+    // Targets
+    SpaceObjRotImpTarg *target;
+    sdword noOfShipsToTarget = targets->numTargets;
+
+    // Weapons
+    Gun *gun;
+    GunStatic *gunStatic;
+    sdword gunIndex;
+    sdword noOfGuns = ship->gunInfo->numGuns;
+    bool hasFiredAtLeastOnce = FALSE;
+    bool hasAttemptedToFireAtLeastOnce = FALSE;
+
+    // Ranging
+    vector trajectory;
+    real32 rangeToTarget;
+    real32 maxRangeToTarget;
+
+    // Correct the current target index if it's out of bounds from the last attempt.
+    if (volleyFireSpec->currentTargetIndex >= noOfShipsToTarget)
+    {
+        volleyFireSetCurrentTargetIndex(volleyFireSpec, 0);
+    }
+
+    // Attempt to attack each target.
+    for (gunIndex = 0; gunIndex < noOfGuns; gunIndex++)
+    {
+        target = targets->TargetPtr[volleyFireSpec->currentTargetIndex];
+        gunStatic = &shipStaticInfo->gunStaticInfo->gunstatics[gunIndex];
+        gun = &ship->gunInfo->guns[gunIndex];
+
+        // Break early if this weapon cannot volley fire.
+        if (!(gunStatic->canVolleyFire))
+        {
+            continue;
+        }
+
+        // Calculate range to target.
+        vecSub(trajectory, ship->collInfo.collPosition, target->collInfo.collPosition);
+        rangeToTarget = RangeToTarget(ship, target, &trajectory);
+        maxRangeToTarget = gun->gunstatic->bulletrange * 0.9f;
+
+        // Break early if this weapon is out of range to target.
+        if (rangeToTarget >= maxRangeToTarget)
+        {
+            continue;
+        }
+
+        hasAttemptedToFireAtLeastOnce = TRUE;
+
+        // Break early if this weapon has no ammunition remaining.
+        if (!gunHasAmmunition(gun))
+        {
+            continue;
+        }
+
+        hasFiredAtLeastOnce = TRUE;
+        missileShoot(ship, gun, target);
+
+        sdword nextTargetIndex = volleyFireGetNextTargetIndex(volleyFireSpec->currentTargetIndex, noOfShipsToTarget);
+        volleyFireSetCurrentTargetIndex(volleyFireSpec, nextTargetIndex);
+    }
+
+    if (hasFiredAtLeastOnce)
+    {
+        aitrackZeroVelocity(ship);
+        return FALSE;
+    }
+    // Stop here and reset everything if the weapons are out of ammunition.
+    else if (hasAttemptedToFireAtLeastOnce)
+    {
+        volleyFireSetBattleChatterBusy(volleyFireSpec, FALSE);
+        volleyFireSetCurrentTargetIndex(volleyFireSpec, 0);
+
+        return TRUE;
+    }
+    // Stop here and attempt to approach first target in the selection list.
+    else
+    {
+        Ship *nextTarget = (Ship *)targets->TargetPtr[0];
+        udword aishipFlags = AISHIP_FastAsPossible | AISHIP_PointInDirectionFlying;
+        real32 limitVelocity = 0.0f;
+        aishipFlyToShipAvoidingObjs(ship, nextTarget, aishipFlags, limitVelocity);
+
+        return FALSE;
+    }
+}
+
+bool MissileDestroyerSpecialTarget(Ship *ship,void *custom)
 {
     ShipStaticInfo *shipStaticInfo = (ShipStaticInfo *)ship->staticinfo;
     MissileDestroyerSpec *spec = (MissileDestroyerSpec *)ship->ShipSpecifics;
     MissileDestroyerStat *stat = (MissileDestroyerStat *)shipStaticInfo->custstatinfo;
+    SelectAnyCommand *targets = (SelectAnyCommand *)custom;
 
     return volleyFireSpecialTarget(
         ship,
-        custom,
+        targets,
         &spec->volleyFire,
         &stat->volleyFire,
-        volleyFireShootAllTargetsLumbering,
-        missileShoot,
-        BCE_COMM_MissleDest_VolleyAttack);
+        BCE_COMM_MissleDest_VolleyAttack,
+        MissileDestroyerSpecialTargetAttack);
 }
 
 CustShipHeader MissileDestroyerHeader =

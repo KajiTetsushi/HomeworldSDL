@@ -13,9 +13,7 @@
 #include "DefaultShip.h"
 #include "Gun.h"
 #include "ObjTypes.h"
-#include "SoundEvent.h"
 #include "StatScript.h"
-#include "Universe.h"
 #include "VolleyFire.h"
 
 P1MissileCorvetteStat p1MissileCorvetteStat;
@@ -142,7 +140,11 @@ void P1MissileCorvetteHousekeep(Ship *ship)
         gunStaticInfo);
 }
 
+<<<<<<< HEAD
 bool P1MissileCorvetteSpecialTargetAttack(Ship *ship, VolleyFireSpec *volleyFireSpec, VolleyFireStat *volleyFireStat, SelectAnyCommand *targets)
+=======
+bool P1MissileCorvetteSpecialTargetAttack(Ship *ship, VolleyFireSpec *volleyFIreSpec, VolleyFireStat *volleyFireStat, SelectAnyCommand *targets)
+>>>>>>> 73d8e85... refactor(game): #22 stop vf attack pattern reuse
 {
     ShipStaticInfo *shipStaticInfo = (ShipStaticInfo *)ship->staticinfo;
 
@@ -208,15 +210,15 @@ bool P1MissileCorvetteSpecialTarget(Ship *ship, void *custom)
     ShipStaticInfo *shipStaticInfo = (ShipStaticInfo *)ship->staticinfo;
     P1MissileCorvetteSpec *spec = (P1MissileCorvetteSpec *)ship->ShipSpecifics;
     P1MissileCorvetteStat *stat = (P1MissileCorvetteStat *)shipStaticInfo->custstatinfo;
+    SelectAnyCommand *targets = (SelectAnyCommand *)custom;
 
     return volleyFireSpecialTarget(
         ship,
-        custom,
+        targets,
         &spec->volleyFire,
         &stat->volleyFire,
-        volleyFireShootAllTargetsDrifting,
-        missileShoot,
-        BCE_COMM_MissleDest_VolleyAttack);
+        BCE_COMM_MissleDest_VolleyAttack,
+        P1MissileCorvetteSpecialTargetAttack);
 }
 
 CustShipHeader P1MissileCorvetteHeader =

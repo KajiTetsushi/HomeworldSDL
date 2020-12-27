@@ -8,8 +8,6 @@
 
 #include "VolleyFire.h"
 
-#include "AIShip.h"
-#include "AITrack.h"
 #include "Battle.h"
 #include "Gun.h"
 #include "ShipSelect.h"
@@ -86,8 +84,8 @@ bool volleyFireIsReady(VolleyFireSpec *spec, VolleyFireStat *stat)
  */
 void volleyFireInit(VolleyFireSpec *spec)
 {
-    volleyFireSetCurrentTargetIndex(spec, 0);
     volleyFireSetBattleChatterBusy(spec, FALSE);
+    volleyFireSetCurrentTargetIndex(spec, 0);
     volleyFireSetLastAttemptedTimestamp(spec, -100000.0f);
     volleyFireSetLastActivatedTimestamp(spec, 0.0f);
 }
@@ -98,42 +96,32 @@ void volleyFireInit(VolleyFireSpec *spec)
  * @param custom Targets selected to attack.
  * @param spec Volley fire instance.
  * @param stat Volley fire configuration.
- * @param shootTargets Ship behavior to use when attacking all selected targets.
- * @param shoot Weapon behavior to use to shoot each target at least once.
  * @param battleChatter Battle chatter event to use when the ability has been activated.
+ * @param attackTargets Ship behavior to use when attacking all selected targets.
  * @return Indication of whether the ship's volley fire sequence is complete.
  */
 bool volleyFireSpecialTarget(
-    Ship *ship,                        // Ship.
-    void *custom,                      // Targets selected to attack.
-    VolleyFireSpec *spec,              // Volley fire instance.
-    VolleyFireStat *stat,              // Volley fire configuration.
-    ShootTargetsCallback shootTargets, // Ship behavior to use when attacking all selected targets.
-    ShootCallback shoot,               // Weapon behavior to use to shoot each target at least once.
-    sdword battleChatterEvent)         // Battle chatter event to use when the ability has been activated.
+    Ship *ship,                          // Ship.
+    SelectAnyCommand *targets,           // Targets selected to attack.
+    VolleyFireSpec *spec,                // Volley fire instance.
+    VolleyFireStat *stat,                // Volley fire configuration.
+    sdword battleChatterEvent,           // Battle chatter event to use when the ability has been activated.
+    AttackTargetsCallback attackTargets) // Ship behavior to use when attacking all selected targets.
 {
-    // Stop here if the user-defined callbacks aren't provided, since the volley fire won't work, anyway.
-    if (shootTargets == NULL || shoot == NULL)
-    {
-        return TRUE;
-    }
+    dbgAssertOrIgnore(attackTargets != NULL);
 
     volleyFireSetLastAttemptedTimestamp(spec, universe.totaltimeelapsed);
 
     // Stop here if the "volley reload time" has passed
-    if ((universe.totaltimeelapsed - spec->lastActivatedOn) <= stat->fireDelay)
+    real32 durationSinceLastActivated = universe.totaltimeelapsed - spec->lastActivatedOn;
+    if (durationSinceLastActivated <= stat->fireDelay)
     {
         return FALSE;
     }
 
     volleyFireSetLastActivatedTimestamp(spec, universe.totaltimeelapsed);
 
-    SpaceObjRotImpTarg *target;
-    SelectAnyCommand *targets = (SelectAnyCommand *)custom;
-    sdword noOfShipsToTarget = targets->numTargets;
-
-    // Stop here and reset everything if no target was selected.
-    if (noOfShipsToTarget == 0)
+    if (targets->numTargets == 0)
     {
         volleyFireSetBattleChatterBusy(spec, FALSE);
         volleyFireSetCurrentTargetIndex(spec, 0);
@@ -152,193 +140,5 @@ bool volleyFireSpecialTarget(
         }
     }
 
-    return shootTargets(ship, spec, targets, shoot);
-}
-
-/**
- * @brief Sets the ship to volley fire without changing its velocity. Use for ships with hit-and-run capabilities such as fighters and corvettes.
- * @param ship Ship.
- * @param spec Volley fire instance.
- * @param targets All targets selected when the volley fire special ability as activated.
- * @param shoot Weapon behavior to use to shoot each target at least once.
- * @return Indication of whether the ship's volley fire sequence is complete.
- */
-bool volleyFireShootAllTargetsDrifting(
-    Ship *ship,                // Ship.
-    VolleyFireSpec *spec,      // Volley fire instance.
-    SelectAnyCommand *targets, // All targets selected when the volley fire special ability as activated.
-    ShootCallback shoot)       // Weapon behavior to use to shoot each target at least once.
-{
-    // Stop here if the shoot callback isn't provided, since the volley fire won't work, anyway.
-    if (shoot == NULL)
-    {
-        return TRUE;
-    }
-
-    ShipStaticInfo *shipStaticInfo = (ShipStaticInfo *)ship->staticinfo;
-
-    // Targets
-    SpaceObjRotImpTarg *target;
-    sdword noOfShipsToTarget = targets->numTargets;
-
-    // Weapons
-    Gun *gun;
-    GunStatic *gunStatic;
-    sdword gunIndex;
-    sdword noOfGuns = ship->gunInfo->numGuns;
-    bool hasFiredAtLeastOnce = FALSE;
-
-    // Correct the current target index if it's out of bounds from the last attempt.
-    if (spec->currentTargetIndex >= noOfShipsToTarget)
-    {
-        volleyFireSetCurrentTargetIndex(spec, 0);
-    }
-
-    // Attempt to attack each target.
-    for (gunIndex = 0; gunIndex < noOfGuns; gunIndex++)
-    {
-        target = targets->TargetPtr[spec->currentTargetIndex];
-        gunStatic = &shipStaticInfo->gunStaticInfo->gunstatics[gunIndex];
-        gun = &ship->gunInfo->guns[gunIndex];
-
-        // Break early if this weapon cannot volley fire.
-        if (!(gunStatic->canVolleyFire))
-        {
-            continue;
-        }
-
-        // Break early if this weapon has no ammunition remaining.
-        if (!gunHasAmmunition(gun))
-        {
-            continue;
-        }
-
-        hasFiredAtLeastOnce = TRUE;
-        shoot(ship, gun, target);
-
-        sdword nextTargetIndex = volleyFireGetNextTargetIndex(spec->currentTargetIndex, noOfShipsToTarget);
-        volleyFireSetCurrentTargetIndex(spec, nextTargetIndex);
-    }
-
-    if (hasFiredAtLeastOnce)
-    {
-        return FALSE;
-    }
-    // Stop here and reset everything if the weapons are out of ammunition.
-    else
-    {
-        volleyFireSetBattleChatterBusy(spec, FALSE);
-        volleyFireSetCurrentTargetIndex(spec, 0);
-
-        return TRUE;
-    }
-}
-
-/**
- * @brief Sets the ship to volley fire in place, flying towards its first target if necessary. Use for slow ships such as frigates and capital ships.
- * @param ship Ship.
- * @param spec Volley fire instance.
- * @param targets All targets selected when the volley fire special ability as activated.
- * @param shoot Weapon behavior to use to shoot each target at least once.
- * @return Indication of whether the ship's volley fire sequence is complete.
- */
-bool volleyFireShootAllTargetsLumbering(
-    Ship *ship,                // Ship.
-    VolleyFireSpec *spec,      // Volley fire instance.
-    SelectAnyCommand *targets, // All targets selected when the volley fire special ability as activated.
-    ShootCallback shoot)       // Weapon behavior to use to shoot each target at least once.
-{
-    // Stop here if the shoot callback isn't provided, since the volley fire won't work, anyway.
-    if (shoot == NULL)
-    {
-        return TRUE;
-    }
-
-    ShipStaticInfo *shipStaticInfo = (ShipStaticInfo *)ship->staticinfo;
-
-    // Targets
-    SpaceObjRotImpTarg *target;
-    sdword noOfShipsToTarget = targets->numTargets;
-
-    // Weapons
-    Gun *gun;
-    GunStatic *gunStatic;
-    sdword gunIndex;
-    sdword noOfGuns = ship->gunInfo->numGuns;
-    bool hasFiredAtLeastOnce = FALSE;
-    bool hasAttemptedToFireAtLeastOnce = FALSE;
-
-    // Ranging
-    vector trajectory;
-    real32 rangeToTarget;
-    real32 maxRangeToTarget;
-
-    // Correct the current target index if it's out of bounds from the last attempt.
-    if (spec->currentTargetIndex >= noOfShipsToTarget)
-    {
-        volleyFireSetCurrentTargetIndex(spec, 0);
-    }
-
-    // Attempt to attack each target.
-    for (gunIndex = 0; gunIndex < noOfGuns; gunIndex++)
-    {
-        target = targets->TargetPtr[spec->currentTargetIndex];
-        gunStatic = &shipStaticInfo->gunStaticInfo->gunstatics[gunIndex];
-        gun = &ship->gunInfo->guns[gunIndex];
-
-        // Break early if this weapon cannot volley fire.
-        if (!(gunStatic->canVolleyFire))
-        {
-            continue;
-        }
-
-        // Calculate range to target.
-        vecSub(trajectory, ship->collInfo.collPosition, target->collInfo.collPosition);
-        rangeToTarget = RangeToTarget(ship, target, &trajectory);
-        maxRangeToTarget = gun->gunstatic->bulletrange * 0.9f;
-
-        // Break early if this weapon is out of range to target.
-        if (rangeToTarget >= maxRangeToTarget)
-        {
-            continue;
-        }
-
-        hasAttemptedToFireAtLeastOnce = TRUE;
-
-        // Break early if this weapon has no ammunition remaining.
-        if (!gunHasAmmunition(gun))
-        {
-            continue;
-        }
-
-        hasFiredAtLeastOnce = TRUE;
-        shoot(ship, gun, target);
-
-        sdword nextTargetIndex = volleyFireGetNextTargetIndex(spec->currentTargetIndex, noOfShipsToTarget);
-        volleyFireSetCurrentTargetIndex(spec, nextTargetIndex);
-    }
-
-    if (hasFiredAtLeastOnce)
-    {
-        aitrackZeroVelocity(ship);
-        return FALSE;
-    }
-    // Stop here and reset everything if the weapons are out of ammunition.
-    else if (hasAttemptedToFireAtLeastOnce)
-    {
-        volleyFireSetBattleChatterBusy(spec, FALSE);
-        volleyFireSetCurrentTargetIndex(spec, 0);
-
-        return TRUE;
-    }
-    // Stop here and attempt to approach first target in the selection list.
-    else
-    {
-        Ship *nextTarget = (Ship *)targets->TargetPtr[0];
-        udword aishipFlags = AISHIP_FastAsPossible | AISHIP_PointInDirectionFlying;
-        real32 limitVelocity = 0.0f;
-        aishipFlyToShipAvoidingObjs(ship, nextTarget, aishipFlags, limitVelocity);
-    
-        return FALSE;
-    }
+    return attackTargets(ship, spec, stat, targets);
 }
