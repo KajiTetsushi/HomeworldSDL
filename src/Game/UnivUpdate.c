@@ -1487,19 +1487,12 @@ Ship *univCreateShip(ShipType shiptype,ShipRace shiprace,vector *shippos,struct 
             gun = &newship->gunInfo->guns[i];
             gunstatic = &shipstaticinfo->gunStaticInfo->gunstatics[i];
             gun->gunstatic = gunstatic;
-
+            gun->numMissiles = gunstatic->maxMissiles;
             switch (gunstatic->guntype)
             {
-                case GUN_MissileLauncher:
-                    gun->numMissiles = gunstatic->maxMissiles;
-                    // deliberately fall through
-                case GUN_MineLauncher:
-                    gun->numMissiles = gunstatic->maxMissiles;      //Use same var for mines
-                case GUN_Gimble:
                 case GUN_Fixed:
                     gun->gunheading = gunstatic->gunnormal;
                     break;
-
                 case GUN_NewGimble:
                     univResetNewGimbleGun(gun);
                     break;
