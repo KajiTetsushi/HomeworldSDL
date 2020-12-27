@@ -53,6 +53,7 @@ void MissileDestroyerStatInitLegacy(struct ShipStaticInfo *shipStaticInfo, Missi
     }
 
     // Assign fallbacks for the essential simple values.
+    shipStaticInfo->canVolleyFire = TRUE;
     stat->volleyFire.fireDelay = stat->missileVolleyTime;
     stat->volleyFire.abilityCooldown = stat->missileLagVolleyTime;
     stat->ammunition.reloadDelay = stat->missileRegenerateTime;
