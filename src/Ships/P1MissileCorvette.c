@@ -13,9 +13,7 @@
 #include "DefaultShip.h"
 #include "Gun.h"
 #include "ObjTypes.h"
-#include "SoundEvent.h"
 #include "StatScript.h"
-#include "Universe.h"
 #include "VolleyFire.h"
 
 P1MissileCorvetteStat p1MissileCorvetteStat;
@@ -208,15 +206,15 @@ bool P1MissileCorvetteSpecialTarget(Ship *ship, void *custom)
     ShipStaticInfo *shipStaticInfo = (ShipStaticInfo *)ship->staticinfo;
     P1MissileCorvetteSpec *spec = (P1MissileCorvetteSpec *)ship->ShipSpecifics;
     P1MissileCorvetteStat *stat = (P1MissileCorvetteStat *)shipStaticInfo->custstatinfo;
+    SelectAnyCommand *targets = (SelectAnyCommand *)custom;
 
     return volleyFireSpecialTarget(
         ship,
-        custom,
+        targets,
         &spec->volleyFire,
         &stat->volleyFire,
-        volleyFireShootAllTargetsDrifting,
-        missileShoot,
-        BCE_COMM_MissleDest_VolleyAttack);
+        BCE_COMM_MissleDest_VolleyAttack,
+        P1MissileCorvetteSpecialTargetAttack);
 }
 
 CustShipHeader P1MissileCorvetteHeader =

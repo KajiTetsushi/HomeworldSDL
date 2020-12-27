@@ -9,7 +9,6 @@
 #define ___VOLLEYFIRE_H
 
 #include "ShipSelect.h"
-#include "SpaceObj.h"
 #include "StatScript.h"
 #include "Types.h"
 
@@ -35,15 +34,15 @@ typedef struct VolleyFireStat
 
 extern scriptStructEntry VolleyFireStatScriptTable[];
 
-typedef void (*ShootCallback)(Ship *ship, Gun *gun, SpaceObjRotImpTarg *target);
-typedef bool (*ShootTargetsCallback)(struct Ship *ship, VolleyFireSpec *spec, SelectAnyCommand *targets, ShootCallback shoot);
+typedef bool (*AttackTargetsCallback)(struct Ship *ship, VolleyFireSpec *spec, VolleyFireStat *stat, SelectAnyCommand *targets);
 
+void volleyFireSetCurrentTargetIndex(VolleyFireSpec *spec, sdword index);
+void volleyFireSetBattleChatterBusy(VolleyFireSpec *spec, bool busy);
+void volleyFireSetLastAttemptedTimestamp(VolleyFireSpec *spec, real32 timestamp);
+void volleyFireSetLastActivatedTimestamp(VolleyFireSpec *spec, real32 timestamp);
+sdword volleyFireGetNextTargetIndex(sdword currentTargetIndex, sdword noOfTargets);
 void volleyFireInit(VolleyFireSpec *spec);
 bool volleyFireIsReady(VolleyFireSpec *spec, VolleyFireStat *stat);
-
-bool volleyFireShootAllTargetsDrifting(Ship *ship, VolleyFireSpec *spec, SelectAnyCommand *targets, ShootCallback shoot);
-bool volleyFireShootAllTargetsLumbering(Ship *ship, VolleyFireSpec *spec, SelectAnyCommand *targets, ShootCallback shoot);
-
-bool volleyFireSpecialTarget(Ship *ship, void *custom, VolleyFireSpec *spec, VolleyFireStat *stat, ShootTargetsCallback shootTargets, ShootCallback shoot, sdword battleChatterEvent);
+bool volleyFireSpecialTarget(Ship *ship, SelectAnyCommand *targets, VolleyFireSpec *spec, VolleyFireStat *stat, sdword battleChatterEvent, AttackTargetsCallback attackTargets);
 
 #endif
