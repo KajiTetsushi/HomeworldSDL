@@ -61,7 +61,7 @@ void P1MissileCorvetteStatInitLegacy(struct ShipStaticInfo *shipStaticInfo, P1Mi
     for (weaponIndex = 0; weaponIndex < noOfWeapons; weaponIndex++)
     {
         gunStatic = &shipStaticInfo->gunStaticInfo->gunstatics[weaponIndex];
-        bool canVolleyFire = gunStatic->guntype == GUN_MissileLauncher ? TRUE : gunStatic->canVolleyFire;
+        bool8 canVolleyFire = gunStatic->guntype == GUN_MissileLauncher ? TRUE : gunStatic->canVolleyFire;
         gunStatic->canVolleyFire = canVolleyFire;
     }
 }
