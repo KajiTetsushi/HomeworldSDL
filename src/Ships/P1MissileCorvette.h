@@ -30,17 +30,17 @@ typedef struct
 
     /**
      * The waiting duration (in seconds) before incrementing the ship's total ammunition by 1.
-     * @deprecated Use ammunition.reloadDelay
+     * @deprecated Use ammunition.reloadCooldown
      */
     real32 missileRegenerateTime;
     /**
      * The delay (in seconds) between every weapon fire while the volley fire special ability is active.
-     * @deprecated Use volleyFire.fireDelay
+     * @deprecated Use volleyFire.abilityCooldown
      */
     real32 missileVolleyTime;
     /**
      * The delay (in seconds) before the volley fire special ability can be used again after its last activation.
-     * @deprecated Use volleyFire.abilityCooldown
+     * @deprecated Use volleyFire.reloadCooldown
      */
     real32 missileLagVolleyTime;
 } P1MissileCorvetteStat;

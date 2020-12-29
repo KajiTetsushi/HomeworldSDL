@@ -17,7 +17,7 @@ static AmmunitionStat ammunitionStat;
 
 scriptStructEntry AmmunitionStatScriptTable[] =
 {
-    { "ammo.reloadDelay",    scriptSetReal32CB,    &(ammunitionStat.reloadDelay),    &ammunitionStat },
+    { "ammo.reloadCooldown",    scriptSetReal32CB,    &(ammunitionStat.reloadCooldown),    &ammunitionStat },
 
     END_SCRIPT_STRUCT_ENTRY
 };
@@ -27,7 +27,7 @@ bool findIndexOfLeastNoOfRoundsGun(GunInfo *gunInfo, GunStaticInfo *gunStaticInf
 //#region Setters
 void ammunitionSetLastReloadedTimestamp(AmmunitionSpec *spec, real32 timestamp)
 {
-    spec->lastReloadedTimestamp = timestamp;
+    spec->lastReloadedOn = timestamp;
 }
 //#endregion
 
@@ -41,24 +41,41 @@ void ammunitionInit(AmmunitionSpec *spec)
 }
 
 /**
- * @brief Reloads one weapon, i.e. the weapon with the least number of rounds, with one round of ammunition.
+ * @brief Determines if the ship's reloading is no longer in cooldown after a previous reload.
+ * @param spec Ammunition instance.
+ * @param stat Ammunition configuration.
+ * @return TRUE if still in cooldown, FALSE if free from cooldown.
+ */
+bool ammunitionCanReloadNow(
+    AmmunitionSpec *spec, // Ammunition instance.
+    AmmunitionStat *stat) // Ammunition configuration.
+{
+    real32 durationSinceLastReload = universe.totaltimeelapsed - spec->lastReloadedOn;
+
+    return durationSinceLastReload > stat->reloadCooldown;
+}
+
+/**
+ * @brief Increments the weapon with the least number of rounds by 1.
  * @param spec Ammunition instance.
  * @param stat Ammunition configuration.
  * @param gunInfo Array of gun instances.
  * @param gunStaticInfo Array of gun configurations.
  */
-void ammunitionReloadLeastNoOfRoundsGun(
-    AmmunitionSpec *spec,
-    AmmunitionStat *stat,
-    GunInfo *gunInfo,
-    GunStaticInfo *gunStaticInfo)
+void ammunitionReload(
+    AmmunitionSpec *spec,         // Ammunition instance.
+    AmmunitionStat *stat,         // Ammunition configuration.
+    GunInfo *gunInfo,             // Array of gun instances.
+    GunStaticInfo *gunStaticInfo) // Array of gun configurations.
 {
-    if ((universe.totaltimeelapsed - spec->lastReloadedTimestamp) <= stat->reloadDelay)
+    bool canReloadNow = ammunitionCanReloadNow(spec, stat);
+
+    if (!canReloadNow)
     {
         return;
     }
 
-    spec->lastReloadedTimestamp = universe.totaltimeelapsed;
+    ammunitionSetLastReloadedTimestamp(spec, universe.totaltimeelapsed);
 
     sdword leastNoOfRoundsGunIndex = findIndexOfLeastNoOfRoundsGun(gunInfo, gunStaticInfo, spec, stat);
 

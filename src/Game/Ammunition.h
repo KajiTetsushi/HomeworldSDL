@@ -16,22 +16,23 @@
 typedef struct AmmunitionSpec
 {
     /**
-     * The elapsed time (in seconds) since the last time the ammunition has been reloaded.
+     * The elapsed time (in s) since the last time the ammunition has been reloaded.
      */
-    real32 lastReloadedTimestamp;
+    real32 lastReloadedOn;
 } AmmunitionSpec;
 
 typedef struct AmmunitionStat
 {
     /**
-     * The waiting duration (in seconds) before incrementing the ship's total ammunition by 1.
+     * The delay (in s) before the ship's total stored ammunition is incremented by 1.
      */
-    real32 reloadDelay;
+    real32 reloadCooldown;
 } AmmunitionStat;
 
 extern scriptStructEntry AmmunitionStatScriptTable[];
 
 void ammunitionInit(AmmunitionSpec *spec);
-void ammunitionReloadLeastNoOfRoundsGun(AmmunitionSpec *spec, AmmunitionStat *stat, GunInfo *gunInfo, GunStaticInfo *gunStaticInfo);
+bool ammunitionCanReloadNow(AmmunitionSpec *spec, AmmunitionStat *stat);
+void ammunitionReload(AmmunitionSpec *spec, AmmunitionStat *stat, GunInfo *gunInfo, GunStaticInfo *gunStaticInfo);
 
 #endif

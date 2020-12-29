@@ -23,13 +23,13 @@ typedef struct VolleyFireSpec
 typedef struct VolleyFireStat
 {
     /**
-     * The delay (in seconds) between every weapon fire while the volley fire special ability is active.
-     */
-    real32 fireDelay;
-    /**
-     * The delay (in seconds) before the volley fire special ability can be used again after its last activation.
+     * The delay (in s) before the volley fire special ability can be activated again.
      */
     real32 abilityCooldown;
+    /**
+     * The delay (in s) before the ammunition can begin reloading after a successful volley fire attack.
+     */
+    real32 reloadCooldown;
 } VolleyFireStat;
 
 extern scriptStructEntry VolleyFireStatScriptTable[];

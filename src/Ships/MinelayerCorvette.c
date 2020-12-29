@@ -100,7 +100,7 @@ void MinelayerCorvetteStaticInitLegacy(struct ShipStaticInfo *shipStaticInfo, Mi
         return;
     }
 
-    stat->ammunition.reloadDelay = stat->mineRegenerateTime;
+    stat->ammunition.reloadCooldown = stat->mineRegenerateTime;
 }
 
 void MinelayerCorvetteStaticInit(char *directory,char *filename,struct ShipStaticInfo *statinfo)
@@ -683,7 +683,7 @@ void MinelayerCorvetteHousekeep(Ship *ship)
     GunInfo *gunInfo = ship->gunInfo;
     GunStaticInfo *gunStaticInfo = shipStaticInfo->gunStaticInfo;
 
-    ammunitionReloadLeastNoOfRoundsGun(
+    ammunitionReload(
         &spec->ammunition,
         &stat->ammunition,
         gunInfo,

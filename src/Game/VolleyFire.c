@@ -13,6 +13,7 @@
 #include "ShipSelect.h"
 #include "SoundEvent.h"
 #include "StatScript.h"
+#include "Types.h"
 #include "Universe.h"
 
 static VolleyFireStat volleyFireStat;
@@ -20,8 +21,8 @@ static VolleyFireStat volleyFireStat;
 scriptStructEntry VolleyFireStatScriptTable[] =
 {
 
-    { "volleyFire.fireDelay",          scriptSetReal32CB,    &(volleyFireStat.fireDelay),          &volleyFireStat },
-    { "volleyFire.abilityCooldown",    scriptSetReal32CB,    &(volleyFireStat.abilityCooldown),    &volleyFireStat },
+    { "volley.abilityCooldown",    scriptSetReal32CB,    &(volleyFireStat.abilityCooldown),    &volleyFireStat },
+    { "volley.reloadCooldown",     scriptSetReal32CB,    &(volleyFireStat.reloadCooldown),     &volleyFireStat },
 
     END_SCRIPT_STRUCT_ENTRY
 };
@@ -67,15 +68,18 @@ void volleyFireBattleChatterAttempt(Ship *ship, sdword event)
 }
 
 /**
- * @brief Determines if the ship's volley fire special ability is still in cooldown.
- * @param ship Volley fire instance.
+ * @brief Determines if the ship's reloading is no longer in cooldown after a successful volley fire.
+ * @param spec Volley fire instance.
+ * @param stat Volley fire configuration.
  * @return TRUE if still in cooldown, FALSE if free from cooldown.
  */
-bool volleyFireIsReady(VolleyFireSpec *spec, VolleyFireStat *stat)
+bool volleyFireCanReloadNow(
+    VolleyFireSpec *spec, // Volley fire instance.
+    VolleyFireStat *stat) // Volley fire configuration.
 {
     real32 durationSinceLastAttempted = universe.totaltimeelapsed - spec->lastAttemptedOn;
 
-    return durationSinceLastAttempted > stat->abilityCooldown;
+    return durationSinceLastAttempted > stat->reloadCooldown;
 }
 
 /**
@@ -114,7 +118,7 @@ bool volleyFireSpecialTarget(
 
     // Stop here if the "volley reload time" has passed
     real32 durationSinceLastActivated = universe.totaltimeelapsed - spec->lastActivatedOn;
-    if (durationSinceLastActivated <= stat->fireDelay)
+    if (durationSinceLastActivated <= stat->abilityCooldown)
     {
         return FALSE;
     }

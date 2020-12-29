@@ -43,7 +43,7 @@ typedef struct
 
     /**
      * The waiting duration (in seconds) before incrementing the ship's total ammunition by 1.
-     * @deprecated Use ammunition.reloadDelay
+     * @deprecated Use ammunition.reloadCooldown
      */
     real32 mineRegenerateTime;
 } MinelayerCorvetteStatics;

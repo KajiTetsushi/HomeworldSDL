@@ -55,9 +55,9 @@ void MissileDestroyerStatInitLegacy(struct ShipStaticInfo *shipStaticInfo, Missi
 
     // Assign fallbacks for the essential simple values.
     shipStaticInfo->canVolleyFire = TRUE;
-    stat->volleyFire.fireDelay = stat->missileVolleyTime;
-    stat->volleyFire.abilityCooldown = stat->missileLagVolleyTime;
-    stat->ammunition.reloadDelay = stat->missileRegenerateTime;
+    stat->volleyFire.abilityCooldown = stat->missileVolleyTime;
+    stat->volleyFire.reloadCooldown = stat->missileLagVolleyTime;
+    stat->ammunition.reloadCooldown = stat->missileRegenerateTime;
 
     // Override only the missile launchers to allow volley fire.
     sdword noOfWeapons = shipStaticInfo->gunStaticInfo->numGuns;
@@ -125,9 +125,10 @@ void MissileDestroyerHousekeep(Ship *ship)
     ShipStaticInfo *shipStaticInfo = (ShipStaticInfo *)ship->staticinfo;
     MissileDestroyerSpec *spec = (MissileDestroyerSpec *)ship->ShipSpecifics;
     MissileDestroyerStat *stat = (MissileDestroyerStat *)shipStaticInfo->custstatinfo;
-    bool isVolleyFireReady = volleyFireIsReady(&spec->volleyFire, &stat->volleyFire);
 
-    if (!isVolleyFireReady)
+    bool canReload = volleyFireCanReloadNow(&spec->volleyFire, &stat->volleyFire);
+
+    if (!canReload)
     {
         return;
     }
@@ -135,7 +136,7 @@ void MissileDestroyerHousekeep(Ship *ship)
     GunInfo *gunInfo = ship->gunInfo;
     GunStaticInfo *gunStaticInfo = shipStaticInfo->gunStaticInfo;
 
-    ammunitionReloadLeastNoOfRoundsGun(
+    ammunitionReload(
         &spec->ammunition,
         &stat->ammunition,
         gunInfo,
