@@ -1360,7 +1360,7 @@ void horseRaceRender()
 
     if (ShouldHaveMousePtr)
     {
-        if (!feShouldSaveMouseCursor())
+        if (0 /*!feShouldSaveMouseCursor()*/)
         {
             rndClearToBlack();
             glClear(GL_DEPTH_BUFFER_BIT);
@@ -1416,9 +1416,9 @@ void horseRaceRender()
         // set the cursor type, reset the variables then draw the mouse cursor
         mouseSelectCursorSetting();
         mouseSetCursorSetting();
-        if (feShouldSaveMouseCursor())
+        if (0 /*feShouldSaveMouseCursor()*/) // roger avoid linker error
         {
-            mouseStoreCursorUnder();
+            //mouseStoreCursorUnder();	// roger avoid linker error
         }
         mousePoll();
         mouseDraw();                                        //draw mouse atop everything
@@ -1432,9 +1432,9 @@ void horseRaceRender()
     rndFlush();
     if (ShouldHaveMousePtr)
     {
-        if (feShouldSaveMouseCursor())
+        if (0 /*feShouldSaveMouseCursor()*/)
         {
-            mouseRestoreCursorUnder();
+            // mouseRestoreCursorUnder(); // roger linker error
         }
     }
     primErrorMessagePrint();
