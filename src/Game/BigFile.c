@@ -15,6 +15,10 @@
 #include <sys/stat.h>
 #endif
 
+#ifdef _WIN32
+    #define strcasecmp _stricmp
+#endif
+
 #include "BigFile.h"
 
 #include "BitIO.h"

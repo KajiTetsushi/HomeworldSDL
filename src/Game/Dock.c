@@ -8,6 +8,10 @@
 
 #include "Dock.h"
 
+#ifdef _WIN32
+    #define strcasecmp _stricmp
+#endif
+
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
