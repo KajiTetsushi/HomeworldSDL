@@ -1093,6 +1093,7 @@ void gpDeleteGame(char *name, featom *atom)
     sdword i;
     sdword index;
     fonthandle  oldfont;
+	char *tmpFilePath;
 
     if (!gpGetGameName(name,atom,filename))
     {
@@ -1103,7 +1104,7 @@ void gpDeleteGame(char *name, featom *atom)
 
     feScreenDisappear(NULL, NULL);
 
-    char *tmpFilePath = filePathPrepend(filename, FF_UserSettingsPath);
+    tmpFilePath = filePathPrepend(filename, FF_UserSettingsPath);
     strcpy(filename, tmpFilePath);
     fileDelete(filename);
 
