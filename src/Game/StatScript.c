@@ -813,7 +813,8 @@ void scriptSetStruct(char *directory,char *filename,scriptStructEntry info[],uby
             if (foundentry != NULL)
             {
                 strcpy(globalScriptFileName,filename);
-                foundentry->setVarCB(directory,value,structureToFillIn + (foundentry->offset1 - foundentry->offset2) );
+            //  foundentry->setVarCB(directory,value,structureToFillIn + (foundentry->offset1 - foundentry->offset2) );	// original
+                foundentry->setVarCB(directory,value,structureToFillIn + ((char*)foundentry->offset1 - (char*)foundentry->offset2) );
             }
         }
     }
@@ -1071,7 +1072,7 @@ void scriptSetGunStatics(char *directory,char *filename,struct ShipStaticInfo *s
                         if (foundentry != NULL)
                         {
                             structureToFillIn = (ubyte *)&gunstaticinfo->gunstatics[processingGun];
-                            foundentry->setVarCB(directory,value,structureToFillIn + (foundentry->offset1 - foundentry->offset2) );
+                            foundentry->setVarCB(directory,value,structureToFillIn + ((char*)foundentry->offset1 - (char*)foundentry->offset2) );
                         }
                     }
                     break;
@@ -1987,7 +1988,7 @@ void mgGameTypeScriptInit()
                     if (foundentry != NULL)
                     {
                         structureToFillIn = (ubyte *)&preSetGames->gameType[gameNum];
-                        foundentry->setVarCB("",value,structureToFillIn + (foundentry->offset1 - foundentry->offset2) );
+                        foundentry->setVarCB("",value,structureToFillIn + ((char*)foundentry->offset1 - (char*)foundentry->offset2) );
                     }
                 }
                 break;
