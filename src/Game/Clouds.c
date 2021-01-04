@@ -23,6 +23,10 @@
 #include "Universe.h"
 #include "UnivUpdate.h"
 
+#ifndef M_PI_2
+#define M_PI_2 3.14159265358979323846 / 2.0
+#endif
+
 #define TEST_LIGHTNING 0
 
 extern udword gDevcaps2;
