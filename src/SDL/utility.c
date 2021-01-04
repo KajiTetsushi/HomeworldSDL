@@ -1457,7 +1457,7 @@ udword utyCloseOK(regionhandle region, sdword ID, udword event, udword data)
 //quit hangs otherwise, so we just exit.
     exit(0);
 #endif //_MACOSX
-  
+
     return 0;
 }
 
@@ -3565,6 +3565,8 @@ char* utyGameSystemsPreInit(void)
 #endif
 #endif
 
+    char *dataPath = getenv("HW_Data");
+
     memset(utyStartedBits, 0, SSA_NumberBits);              //clear all module startup bits
     globalsInit();
 
@@ -3576,7 +3578,6 @@ char* utyGameSystemsPreInit(void)
 
     // where the Homeworld data files are
 
-    char *dataPath = getenv("HW_Data");
     // default to the current directory
     if (dataPath == NULL)
     {
