@@ -6,6 +6,7 @@
 //  Created 2/8/1998 by khent
 // =============================================================================
 
+#include <assert.h>
 #include "Clouds.h"
 
 #include "AutoLOD.h"
@@ -982,9 +983,20 @@ void cloudGenerateLightning(vector *from, vector *to) {
 }
 
 void cloudRenderLightning(vector* pa, vector* pb, udword depth, sdword lod) {
-    vector lightning[depth];
+
+#if false
+	// original: error C2057: expected constant expression
+    vector lightning[depth];		
+#else 
+	// roger's modification
+    vector lightning[1024];		
+#endif
+
     real32 width = 12.0f / (real32)(lod + 1);
     real32 alpha = width / 10.0f;
+
+	assert(depth<1024);
+
     if (width > 3.0f) alpha = 1.0f;
     memcpy(&lightning[0], pa, sizeof(vector));
     memcpy(&lightning[depth - 1], pb, sizeof(vector));
