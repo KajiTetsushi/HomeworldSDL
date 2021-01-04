@@ -618,7 +618,7 @@ sdword isoundmixerprocess(void *pBuf1, udword nSize1, void *pBuf2, udword nSize2
 	/* mix the SFX channels */
 	for (i = 0; i < soundnumvoices; i++)
 	{
-		if (channels[i].status >= SOUND_PLAYING)
+		if (channels[i].status >= SOUND_PLAYING && channels[i].status < 20) // HACK, if memory got corrupted it's usually >= 20, stop playing this sample to avoid a crash
 		{
 			pchan = &channels[i];
 
