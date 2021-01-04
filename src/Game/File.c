@@ -1098,7 +1098,7 @@ sdword fileSizeGet(char *_fileName, udword flags)
             length = (whereFound->tableOfContents.fileEntries + fileIndex)->realLength;
 
 #if FILE_VERBOSE_LEVEL >= 3
-            dbgMessagef("%s: '%s' is %d bytes in length (bigfile)", __func__, _fileName, length);
+            dbgMessagef("%s: '%s' is %d bytes in length (bigfile)", __FUNCTION__/*__func__*/, _fileName, length);
 #endif
             return length;
         }

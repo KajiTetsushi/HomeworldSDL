@@ -329,7 +329,7 @@ glfontheader* glfontCreate(fontheader* header, fontheader* newHeader)
                 data = glfontPackOntoPage(newHeader, glfont, page, &usedHeight, &lastChar);
 #if FONT_VERBOSE_LEVEL >=1
                 dbgMessagef("%s: %d pages [w x h = %d x %d]",
-                            __func__, glfont->numPages, page->width, page->height);
+                            __FUNCTION__ /*__func__*/, glfont->numPages, page->width, page->height);
 #endif
 
                 //update starting character index
@@ -391,7 +391,7 @@ glfontheader* glfontCreate(fontheader* header, fontheader* newHeader)
                 }
 #if FONT_VERBOSE_LEVEL >=1
                 dbgMessagef("%s: %d pages [w x h = %d x %d]",
-                            __func__, glfont->numPages, page->width, page->height);
+                            __FUNCTION__ /*__func__*/, glfont->numPages, page->width, page->height);
 #endif
 
                 //create the GL font page

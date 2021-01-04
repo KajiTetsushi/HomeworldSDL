@@ -2075,7 +2075,7 @@ void tutGameMessage(char *eventName)
     }
 
 #ifdef HW_BUILD_FOR_DEBUGGING
-    dbgMessagef("%s: '%s'", __func__, eventName);
+    dbgMessagef("%s: '%s'", __FUNCTION__/*__func__*/, eventName);
 #endif
 
     if( !tutGameMessageInQueue(eventName) && tutGameMessageIndex < 16 )

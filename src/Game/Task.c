@@ -62,7 +62,7 @@ DEFINE_TASK(taskTestFunction)
 
     for (state->index = 0; state->index < 4; state->index++)
     {
-        dbgMessagef("%s: Task test function called %d times.", __func__, index);
+        dbgMessagef("%s: Task test function called %d times.", __FUNCTION__/*__func__*/, index);
         aba++;
         taskYield(0);
     }
@@ -82,7 +82,7 @@ sdword taskStartup(udword frequency)
     sdword index;
 
 #if TASK_VERBOSE_LEVEL >= 1
-    dbgMessagef("%s: Task module started using a frequency of %dHz", __func__, frequency);
+    dbgMessagef("%s: Task module started using a frequency of %dHz", __FUNCTION__/*__func__*/, frequency);
 #endif
 
     dbgAssertOrIgnore(taskModuleInit == FALSE);
@@ -210,7 +210,7 @@ taskhandle taskStartName(taskfunction function, char *name,
 
 #if TASK_VERBOSE_LEVEL >= 2
     dbgMessagef("%s: starting task at 0x%x at %d Hz, flags 0x%x using handle %d at 0x%x",
-                __func__, function, 1.0f/period, flags, handle, taskData[handle]);
+                __FUNCTION__/*__func__*/, function, 1.0f/period, flags, handle, taskData[handle]);
 #endif
 
     //make task in use and running
@@ -252,7 +252,7 @@ void taskStop(taskhandle handle)
     dbgAssertOrIgnore(taskData[handle] != NULL);
 
 #if TASK_VERBOSE_LEVEL >= 2
-    dbgMessagef("%s: destroying task %d", __func__, handle);
+    dbgMessagef("%s: destroying task %d", __FUNCTION__/*__func__*/, handle);
 #endif
 
     if (taskData[handle]->context != NULL)
@@ -282,7 +282,7 @@ sdword taskExecuteAllPending(sdword ticks)
 #if TASK_VERBOSE_LEVEL >= 2
     if (ticks > 0)
     {
-        dbgMessagef("%s: executing tasks for %d ticks", __func__, ticks);
+        dbgMessagef("%s: executing tasks for %d ticks", __FUNCTION__/*__func__*/, ticks);
     }
 #endif
 
@@ -357,7 +357,7 @@ sdword taskExecuteAllPending(sdword ticks)
             dbgMessagef(
                 "%s: task %d (%s) to run %d times, "
                 "%d ticks elapsed / %d per call = %d",
-                __func__,
+                __FUNCTION__/*__func__*/,
                 taskCurrentTask, taskData[taskCurrentTask]->name,
                 taskNumberCalls,
                 tLocalTicks, taskData[taskCurrentTask]->ticksPerCall,

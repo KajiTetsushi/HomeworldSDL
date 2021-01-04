@@ -3075,7 +3075,7 @@ void trMakeCurrent(trhandle handle)
     //
     if (handle != TR_Invalid && trIndex(handle) >= TR_RegistrySize){
 #if TR_ERROR_CHECKING
-        dbgMessagef("%s: sent invalid trhandle: 0x%lx", __func__, handle);
+        dbgMessagef("%s: sent invalid trhandle: 0x%lx", __FUNCTION__/*__func__*/, handle);
 #endif
         return;
     }
