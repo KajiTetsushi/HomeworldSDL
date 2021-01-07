@@ -42,3 +42,6 @@ configure.ac
 
 cscope.files
 cscope.out
+Windows/.vs/
+Windows/prj/v2019_hwsdl_dbug/
+Windows/prj/vc2019_hwsdl.vcxproj.user
