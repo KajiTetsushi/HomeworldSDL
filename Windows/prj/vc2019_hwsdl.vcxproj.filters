@@ -924,6 +924,12 @@
     <ClCompile Include="..\..\src\Game\File.c">
       <Filter>Source Files\dont_compile</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\Game\Ammunition.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\Game\VolleyFire.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\Game\Matrix.s">

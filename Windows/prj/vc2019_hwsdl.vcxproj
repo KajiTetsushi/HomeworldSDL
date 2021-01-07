@@ -226,6 +226,7 @@
     <ClCompile Include="..\..\src\Game\AIUtilities.c" />
     <ClCompile Include="..\..\src\Game\AIVar.c" />
     <ClCompile Include="..\..\src\Game\Alliance.c" />
+    <ClCompile Include="..\..\src\Game\Ammunition.c" />
     <ClCompile Include="..\..\src\Game\Animatic.c" />
     <ClCompile Include="..\..\src\Game\Attack.c" />
     <ClCompile Include="..\..\src\Game\AutoDownloadMap.c" />
@@ -373,6 +374,7 @@
     <ClCompile Include="..\..\src\Game\Universe.c" />
     <ClCompile Include="..\..\src\Game\UnivUpdate.c" />
     <ClCompile Include="..\..\src\Game\Vector.c" />
+    <ClCompile Include="..\..\src\Game\VolleyFire.c" />
     <ClCompile Include="..\..\src\Game\Volume.c" />
     <ClCompile Include="..\..\src\homeworld.c" />
     <ClCompile Include="..\..\src\Missions\Generated\Mission01.c" />
