@@ -1261,6 +1261,7 @@ void mouseSelectCursorSetting(void)
                 {
                     case Carrier:
                     case Mothership:
+                    case P1Mothership:
                         bitSet(mouseInfo.flags, MCF_GUICapable);
                         bitSet(mouseInfo.flags, MCF_BuildGUI);
                         break;
@@ -1381,6 +1382,7 @@ void mouseSelectCursorSetting(void)
         {
             case Carrier:
             case Mothership:
+            case P1Mothership:
                 if (bitTest(mouseInfo.flags, MCF_Dockable) ||
                     bitTest(mouseInfo.flags, MCF_SmallDockable))
                 {
