@@ -51,6 +51,9 @@ real32 mothershipDistSqr2;
 
 #define DIST_FROM_HALL_BREAKPOS     600
 
+/**
+ * @deprecated We should use the new namespaced API from here on out.
+ */
 scriptStructEntry MinelayerCorvetteStaticScriptTable[] =
 {
     { "NumMinesInSide",    scriptSetUdwordCB,  &(MinelayerCorvetteStatic.NumMinesInSide),  &(MinelayerCorvetteStatic) },
@@ -84,6 +87,21 @@ scriptStructEntry MinelayerCorvetteStaticScriptTable[] =
 
 bool MinelayerCorvetteStaticMineDrop(Ship *ship,SpaceObjRotImpTarg *target);
 
+/**
+ * @brief Initializes the ship using legacy attributes, if all of them were provided.
+ * @deprecated Backwards compatibility
+ * @param shipStaticInfo Ship static info.
+ * @param stat Ship statics.
+ */
+void MinelayerCorvetteStaticInitLegacy(struct ShipStaticInfo *shipStaticInfo, MinelayerCorvetteStatics *stat)
+{
+    if (!(stat->mineRegenerateTime))
+    {
+        return;
+    }
+
+    stat->ammunition.reloadCooldown = stat->mineRegenerateTime;
+}
 
 void MinelayerCorvetteStaticInit(char *directory,char *filename,struct ShipStaticInfo *statinfo)
 {
@@ -94,7 +112,11 @@ void MinelayerCorvetteStaticInit(char *directory,char *filename,struct ShipStati
 
     statinfo->custstatinfo = corvstat;
 
-    scriptSetStruct(directory,filename,MinelayerCorvetteStaticScriptTable,(ubyte *)corvstat);
+    scriptSetStruct(directory, filename, AmmunitionStatScriptTable, (ubyte *)&corvstat->ammunition);
+    scriptSetStruct(directory, filename, MinelayerCorvetteStaticScriptTable, (ubyte *)corvstat);
+
+    MinelayerCorvetteStaticInitLegacy(statinfo, corvstat);
+
     corvstat->DropStopRadiusSqr = corvstat->MineDropDistance * corvstat->MineDropDistance;
     corvstat->NumMinesInSideSqr = corvstat->NumMinesInSide*corvstat->NumMinesInSide;
     corvstat->MineClearDistanceSQR = corvstat->MineClearDistance*corvstat->MineClearDistance;
@@ -655,44 +677,17 @@ void MineLayerCorvetteDied(Ship *ship)
 ----------------------------------------------------------------------------*/
 void MinelayerCorvetteHousekeep(Ship *ship)
 {
-    ShipStaticInfo *shipstaticinfo = (ShipStaticInfo *)ship->staticinfo;
+    ShipStaticInfo *shipStaticInfo = (ShipStaticInfo *)ship->staticinfo;
     MinelayerCorvetteSpec *spec = (MinelayerCorvetteSpec *)ship->ShipSpecifics;
-    MinelayerCorvetteStatics *mstat = (MinelayerCorvetteStatics *)shipstaticinfo->custstatinfo;
-    sdword numGuns;
-    sdword i;
-    Gun *gun;
-    GunStatic *gunstatic;
-    sdword minMissiles;
-    sdword minIndex;
+    MinelayerCorvetteStatics *stat = (MinelayerCorvetteStatics *)shipStaticInfo->custstatinfo;
+    GunInfo *gunInfo = ship->gunInfo;
+    GunStaticInfo *gunStaticInfo = shipStaticInfo->gunStaticInfo;
 
-    if ((universe.totaltimeelapsed - spec->lasttimeRegeneratedMines) > mstat->mineRegenerateTime)
-    {
-        spec->lasttimeRegeneratedMines = universe.totaltimeelapsed;
-        numGuns = ship->gunInfo->numGuns;
-
-        // find missile launcher with least missiles, and give it a missile
-        for (i=0,minIndex=-1,minMissiles=100000;i<numGuns;i++)
-        {
-            gunstatic = &shipstaticinfo->gunStaticInfo->gunstatics[i];
-            if (gunstatic->guntype == GUN_MineLauncher)
-            {
-                gun = &ship->gunInfo->guns[i];
-                if (gun->numMissiles < gunstatic->maxMissiles)
-                {
-                    if (gun->numMissiles < minMissiles)
-                    {
-                        minMissiles = gun->numMissiles;
-                        minIndex = i;
-                    }
-                }
-            }
-        }
-
-        if (minIndex != -1)
-        {
-            ship->gunInfo->guns[minIndex].numMissiles++;
-        }
-    }
+    ammunitionReload(
+        &spec->ammunition,
+        &stat->ammunition,
+        gunInfo,
+        gunStaticInfo);
 }
 
 /*-----------------------------------------------------------------------------

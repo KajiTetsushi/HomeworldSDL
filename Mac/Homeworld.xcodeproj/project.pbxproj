@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		091AFDE0258625430027A01D /* VolleyFire.c in Sources */ = {isa = PBXBuildFile; fileRef = 091AFDDF258625430027A01D /* VolleyFire.c */; };
+		091AFDE1258625430027A01D /* VolleyFire.c in Sources */ = {isa = PBXBuildFile; fileRef = 091AFDDF258625430027A01D /* VolleyFire.c */; };
+		091AFDE5258F7CC20027A01D /* Ammunition.c in Sources */ = {isa = PBXBuildFile; fileRef = 091AFDE2258F7CC10027A01D /* Ammunition.c */; };
+		091AFDE6258F7F6F0027A01D /* Ammunition.c in Sources */ = {isa = PBXBuildFile; fileRef = 091AFDE2258F7CC10027A01D /* Ammunition.c */; };
 		174F9C6A239017B10087B2DB /* SDL2.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 1793E3D6237095FD006F67CB /* SDL2.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		1793E3D7237095FD006F67CB /* SDL2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1793E3D6237095FD006F67CB /* SDL2.framework */; };
 		1793E3D8237095FD006F67CB /* SDL2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1793E3D6237095FD006F67CB /* SDL2.framework */; };
@@ -619,6 +623,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		091AFDDE258625430027A01D /* VolleyFire.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = VolleyFire.h; path = ../src/Game/VolleyFire.h; sourceTree = SOURCE_ROOT; };
+		091AFDDF258625430027A01D /* VolleyFire.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = VolleyFire.c; path = ../src/Game/VolleyFire.c; sourceTree = SOURCE_ROOT; };
+		091AFDE2258F7CC10027A01D /* Ammunition.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = Ammunition.c; path = ../src/Game/Ammunition.c; sourceTree = SOURCE_ROOT; };
+		091AFDE3258F7CC10027A01D /* Ammunition.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Ammunition.h; path = ../src/Game/Ammunition.h; sourceTree = SOURCE_ROOT; };
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		1793E3D6237095FD006F67CB /* SDL2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = SDL2.framework; sourceTree = "<group>"; };
 		1793E3E12371F080006F67CB /* Homeworld.big */ = {isa = PBXFileReference; lastKnownFileType = file; name = Homeworld.big; path = ../Homeworld.big; sourceTree = "<group>"; };
@@ -1523,6 +1531,8 @@
 		90623BED064992AE0088361C /* Game */ = {
 			isa = PBXGroup;
 			children = (
+				091AFDE2258F7CC10027A01D /* Ammunition.c */,
+				091AFDE3258F7CC10027A01D /* Ammunition.h */,
 				90623BEE064992AE0088361C /* AIAttackMan.c */,
 				90623BEF064992AE0088361C /* AIAttackMan.h */,
 				90623BF0064992AE0088361C /* AIDefenseMan.c */,
@@ -1813,6 +1823,8 @@
 				90623D1B064992AF0088361C /* Vector.c */,
 				90623D1C064992AF0088361C /* Vector.h */,
 				90623D1D064992AF0088361C /* VolTweakDefs.h */,
+				091AFDDE258625430027A01D /* VolleyFire.h */,
+				091AFDDF258625430027A01D /* VolleyFire.c */,
 				90623D1E064992AF0088361C /* Volume.c */,
 				90623D1F064992AF0088361C /* Volume.h */,
 			);
@@ -2341,6 +2353,7 @@
 				3516C955077C41B0001AA863 /* AIVar.c in Sources */,
 				3516C956077C41B0001AA863 /* Alliance.c in Sources */,
 				3516C957077C41B0001AA863 /* Animatic.c in Sources */,
+				091AFDE5258F7CC20027A01D /* Ammunition.c in Sources */,
 				3516C958077C41B0001AA863 /* Attack.c in Sources */,
 				3516C959077C41B0001AA863 /* AutoDownloadMap.c in Sources */,
 				3516C95A077C41B0001AA863 /* AutoLOD.c in Sources */,
@@ -2456,6 +2469,7 @@
 				3516C9CD077C41B0001AA863 /* Universe.c in Sources */,
 				3516C9CE077C41B0001AA863 /* UnivUpdate.c in Sources */,
 				3516C9CF077C41B0001AA863 /* Vector.c in Sources */,
+				091AFDE1258625430027A01D /* VolleyFire.c in Sources */,
 				3516C9D0077C41B0001AA863 /* Volume.c in Sources */,
 				3516CA23077C41B0001AA863 /* font.c in Sources */,
 				3516CA2B077C41B0001AA863 /* mainrgn.c in Sources */,
@@ -2635,6 +2649,7 @@
 				90623D3C064992AF0088361C /* AIUtilities.c in Sources */,
 				90623D3E064992AF0088361C /* AIVar.c in Sources */,
 				90623D40064992AF0088361C /* Alliance.c in Sources */,
+				091AFDE6258F7F6F0027A01D /* Ammunition.c in Sources */,
 				90623D42064992AF0088361C /* Animatic.c in Sources */,
 				90623D44064992AF0088361C /* Attack.c in Sources */,
 				90623D47064992AF0088361C /* AutoDownloadMap.c in Sources */,
@@ -2751,6 +2766,7 @@
 				90623E49064992AF0088361C /* Universe.c in Sources */,
 				90623E4B064992AF0088361C /* UnivUpdate.c in Sources */,
 				90623E4D064992AF0088361C /* Vector.c in Sources */,
+				091AFDE0258625430027A01D /* VolleyFire.c in Sources */,
 				90623E50064992AF0088361C /* Volume.c in Sources */,
 				90BD926A064AEE7B003E3D39 /* font.c in Sources */,
 				90BD9285064AEE7B003E3D39 /* mouse.c in Sources */,

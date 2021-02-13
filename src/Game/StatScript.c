@@ -100,6 +100,7 @@ static scriptStructEntry StaticGunInfoScriptTable[] =
     { "DamageLo",            scriptSetReal32CB,       &(gunStaticTemplate.baseGunDamageLo),      &gunStaticTemplate },
     { "DamageHi",            scriptSetReal32CB,       &(gunStaticTemplate.baseGunDamageHi),      &gunStaticTemplate },
     { "MaxMissiles",         scriptSetSdwordCB,       &(gunStaticTemplate.maxMissiles),          &gunStaticTemplate },
+    { "canVolleyFire",       scriptSetBool8,          &(gunStaticTemplate.canVolleyFire),        &gunStaticTemplate },
     { "BulletLifeTime",      scriptSetReal32CB,       &(gunStaticTemplate.bulletlifetime),       &gunStaticTemplate },
     { "BulletLength",        scriptSetReal32CB,       &(gunStaticTemplate.bulletlength),         &gunStaticTemplate },
     { "BulletRange",         scriptSetReal32CB,       &(gunStaticTemplate.bulletrange),          &gunStaticTemplate },

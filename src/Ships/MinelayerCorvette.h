@@ -8,6 +8,7 @@
 #ifndef ___MINELAYERCORVETTE_H
 #define ___MINELAYERCORVETTE_H
 
+#include "Ammunition.h"
 #include "Attack.h"
 
 #define MINE_DROP_ATTACK            0
@@ -19,6 +20,8 @@
 typedef struct
 {
     AttackSideStepParameters sidestepParameters;
+    AmmunitionStat ammunition;
+
     udword NumMinesInSide;
     real32 MINE_STOP_FRICTION;
     real32 MineSpacing;
@@ -37,12 +40,18 @@ typedef struct
     real32 forced_drop_damage_lo;
     real32 gunReFireTime;
     real32 forced_drop_lifetime;
+
+    /**
+     * The waiting duration (in seconds) before incrementing the ship's total ammunition by 1.
+     * @deprecated Use ammunition.reloadCooldown
+     */
     real32 mineRegenerateTime;
 } MinelayerCorvetteStatics;
 
 typedef struct
 {
     AttackSideStep attacksidestep;
+    AmmunitionSpec ammunition;
     sdword MiningStatus;
     udword dropcount;
     vector aivec;

@@ -1227,7 +1227,6 @@ void selSelectionDraw5(Ship *ship)      // PLEASE DON'T COMMENT THIS FUNCTION OU
 
 /**
  * @brief Prints the ammunition counter if the ship has ammunition.
- * 
  * @param ship The reference ship.
  * @param font Font to use for the particular LOD.
  * @param x Coordinates to print on screen from the left.

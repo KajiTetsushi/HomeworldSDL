@@ -2253,8 +2253,9 @@ void InitStatShipInfo(ShipStaticInfo *statinfo,ShipType type,ShipRace race)
             gunstaticinfo->gunstatics[i].gunindex = i;
             gunstatic = &(statinfo)->gunStaticInfo->gunstatics[i];
 
-            // Precompute indication that this ship will carry ammunition.
+            // Precompute indicators.
             statinfo->hasAmmunition = statinfo->hasAmmunition || gunstatic->maxMissiles;
+            statinfo->canVolleyFire = statinfo->canVolleyFire || gunstatic->canVolleyFire;
         }
         mexGetGunStaticInfo(gunstaticinfo,statinfo->staticheader.pMexData);
     }

@@ -349,6 +349,9 @@
 				RelativePath="..\..\src\Game\Alliance.c">
 			</File>
 			<File
+				RelativePath="..\..\src\Game\Ammunition.c">
+			</File>
+			<File
 				RelativePath="..\..\src\Game\Animatic.c">
 			</File>
 			<File
@@ -1222,6 +1225,9 @@
 				RelativePath="..\..\src\Game\Vector.c">
 			</File>
 			<File
+				RelativePath="..\..\src\Game\VolleyFire.c">
+			</File>
+			<File
 				RelativePath="..\..\src\Game\Volume.c">
 			</File>
 			<File
@@ -1369,6 +1375,9 @@
 			</File>
 			<File
 				RelativePath="..\..\src\Game\Alliance.h">
+			</File>
+			<File
+				RelativePath="..\..\src\Game\Ammunition.h">
 			</File>
 			<File
 				RelativePath="..\..\src\Game\Animatic.h">
@@ -2122,6 +2131,9 @@
 			</File>
 			<File
 				RelativePath="..\..\src\Game\VolTweakDefs.h">
+			</File>
+			<File
+				RelativePath="..\..\src\Game\VolleyFire.h">
 			</File>
 			<File
 				RelativePath="..\..\src\Game\Volume.h">

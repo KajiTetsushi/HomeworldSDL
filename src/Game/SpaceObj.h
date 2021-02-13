@@ -75,6 +75,9 @@ typedef struct
     // for GUN_MissileLauncher
     sdword maxMissiles;
 
+    // VolleyFire
+    bool8 canVolleyFire;         // Can the volley fire special ability use this weapon?
+
     real32 triggerHappy;        // cosine of maximum allowed angle allowed before a fixed gun will shoot
     real32 gunDamageLo[NUM_TACTICS_TYPES];          // low damage potential
     real32 gunDamageHi[NUM_TACTICS_TYPES];          // high damage potential
@@ -589,6 +592,8 @@ typedef struct ShipStaticInfo
     bool8 canTargetMultipleTargets;
     bool8 rotateToRetaliate;
     bool8 canReceiveTheseShips[4];
+
+    bool8 canVolleyFire; // Indicates whether at least one of the ship's weapons uses the volley fire special ability.
     bool8 hasAmmunition; // Indicates whether at least one of the ship's weapons carry ammunition.
 
     bool passiveAttackPenaltyExempt;

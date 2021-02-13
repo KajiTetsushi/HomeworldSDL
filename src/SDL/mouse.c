@@ -1327,12 +1327,16 @@ void mouseSelectCursorSetting(void)
             {
                 bitSet(mouseInfo.flags, MCF_NonCombat);
             }
+
+            if (ship->staticinfo->canVolleyFire)
+            {
+                bitSet(mouseInfo.flags, MCF_SpecialAttack);
+            }
+
             //set flags for special attack/support ships
             switch (ship->shiptype)
             {
-                case MissileDestroyer:
                 case HeavyCorvette:
-                case P1MissileCorvette:
                     bitSet(mouseInfo.flags, MCF_SpecialAttack);
                     break;
                 case Carrier:
