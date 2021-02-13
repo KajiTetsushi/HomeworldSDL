@@ -1,7 +1,9 @@
 *.big
 *.wxd
 *.vce
+*.bik
 
+*.gch
 .vscode
 
 Mac/build

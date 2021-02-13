@@ -110,6 +110,60 @@ typedef struct tagTGAFileHeader
 } TGAFileHeader;
 
 
+
+/* Dithering for the vertex colored backgrounds (rbrune)
+
+   The beautiful backgrounds are basically pure gradients which tend to
+   show color banding due to framebuffer and most displays beeing limited
+   to 8 Bit per color channel.
+   To get rid of the visible color banding we apply
+   an ordered dithering pattern. The idea is to trick the eye
+   into perceiving intermediate color values that the physical
+   display cannot represent. This is done by slightly offsetting
+   the color values such that the rounding into a specific 8 Bit
+   color randomly rounds up or down with a tendency to round more
+   often into the direction the actual color is closest to.
+
+   Further reading: https://en.wikipedia.org/wiki/Ordered_dithering
+
+   Implementation:
+   We use a simple fragment shader that we enable just for the
+   background rendering. It samples the dither pattern, offsets
+   it to a [-1/2, +1/2] range and scales it to the width of
+   a single color step 1/255 (8 Bit resolution).
+   This offset is then applied to the original color of the
+   fragment and send out.
+
+   Notes:
+   The dither_pattern values are in the range [0,63] and before
+   using the dither Matrix should be scaled by 1/64 to the [0,1]
+   range. Loading the dither_pattern as a Texture automatically
+   converts it to the [0, 1] range - but since the range of an
+   unsigned byte is [0, 255] and not [0, 63], as the pattern uses,
+   we have to multiply by 4 in the shader to get to the desired
+   [0, 1] range.
+
+*/
+char *dither_fragment_shader = "uniform sampler2D sampler;"
+                               "void main()"
+                               "{"
+                               "    vec4 dither = (1.0 / 255.0) * vec4(texture2D(sampler, gl_FragCoord.xy / 8.0).r * 4.0 - (1.0 / 2.0));"
+                               "    gl_FragColor = gl_Color + dither;"
+                               "}";
+static GLuint dither_program = 0;
+static GLuint dither_texture;
+// 8x8 Bayer dither matrix
+static const char dither_pattern[] = {
+     0, 48, 12, 60,  3, 51, 15, 63,
+    32, 16, 44, 28, 35, 19, 47, 31,
+     8, 56,  4, 52, 11, 59,  7, 55,
+    40, 24, 36, 20, 43, 27, 39, 23,
+     2, 50, 14, 62,  1, 49, 13, 61,
+    34, 18, 46, 30, 33, 17, 45, 29,
+    10, 58,  6, 54,  9, 57,  5, 53,
+    42, 26, 38, 22, 41, 25, 37, 21};
+
+
 // -----
 // code
 // -----
@@ -561,9 +615,9 @@ void btgLoad(char* filename)
 #endif
 
 
-// Hard coding sizeof values. 
+// Hard coding sizeof values.
 // This is because they may change later on in the world but static in the file.
-// This allows us to align variables. It replaces 
+// This allows us to align variables. It replaces
 //  memcpy(btgHead, btgData, headSize);
 
     memset(btgHead,0,sizeof(*btgHead));
@@ -630,7 +684,7 @@ void btgLoad(char* filename)
 
     memcpy( (ubyte*)btgHead+offsetof(btgHeader,renderMode    ), btgDataOffset, 4 );
     btgDataOffset += 4;
-        
+
 //    memcpy(btgHead, btgData, headSize);  //See above.
 
 #if FIX_ENDIAN
@@ -705,13 +759,13 @@ void btgLoad(char* filename)
         for( i=0; i<btgHead->numVerts; i++ )
         {
             btgVerts[i].flags = FIX_ENDIAN_INT_32( btgVerts[i].flags );
-            
+
             swap  = ( Uint64 *)&btgVerts[i].x;
             *swap = SDL_SwapLE64( *swap );
-            
+
             swap  = ( Uint64 *)&btgVerts[i].y;
             *swap = SDL_SwapLE64( *swap );
-            
+
             btgVerts[i].red        = FIX_ENDIAN_INT_32( btgVerts[i].red );
             btgVerts[i].green      = FIX_ENDIAN_INT_32( btgVerts[i].green );
             btgVerts[i].blue       = FIX_ENDIAN_INT_32( btgVerts[i].blue );
@@ -860,7 +914,7 @@ void btgLoad(char* filename)
             instarp += 4;
 
 	}
-		
+
 #if FIX_ENDIAN
 		for( i=0; i<btgHead->numPolys; i++ )
 		{
@@ -1297,6 +1351,51 @@ void btgRender()
         lastFade = btgFade;
     }
 
+    //dbgMessagef("VBO = %d", useVBO);
+    //glUseProgram(0);
+
+    if (!dither_program)
+    {
+        dbgMessagef("Setting up BTG dithering shader");
+        int success;
+        char infoLog[512];
+
+        GLuint fragment = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(fragment, 1, &dither_fragment_shader, NULL);
+        glCompileShader(fragment);
+        glGetShaderiv(fragment, GL_COMPILE_STATUS, &success);
+        if (!success)
+        {
+            glGetShaderInfoLog(fragment, 512, NULL, infoLog);
+            dbgMessagef("Dither compile: %s", infoLog);
+        }
+
+        dither_program = glCreateProgram();
+        glAttachShader(dither_program, fragment);
+        glLinkProgram(dither_program);
+        glGetProgramiv(dither_program, GL_LINK_STATUS, &success);
+        if (!success)
+        {
+            glGetProgramInfoLog(dither_program, 512, NULL, infoLog);
+            dbgMessagef("Dither link: %s", infoLog);
+            dither_program = 0;
+        }
+
+        glDeleteShader(fragment);
+
+        glGenTextures(1, &dither_texture);
+        glBindTexture(GL_TEXTURE_2D, dither_texture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 8, 8, 0, GL_RED, GL_UNSIGNED_BYTE, dither_pattern);
+    }
+
+    glUseProgram(dither_program);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, dither_texture);
+
     //use DrawElements to render the bg polys
     glEnableClientState(GL_COLOR_ARRAY);
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -1313,6 +1412,9 @@ void btgRender()
         glDrawElements(GL_TRIANGLES, 3 * btgHead->numPolys, GL_UNSIGNED_SHORT, btgIndices);
     }
     glDisableClientState(GL_COLOR_ARRAY);
+
+    glUseProgram(0);
+
 
     //stars
     rndPerspectiveCorrection(FALSE);
